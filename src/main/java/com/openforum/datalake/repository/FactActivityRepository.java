@@ -13,16 +13,17 @@ import java.util.UUID;
 
 @Repository
 public interface FactActivityRepository extends JpaRepository<FactActivity, FactActivityId> {
-    boolean existsByEventId(UUID eventId);
+        boolean existsByEventId(UUID eventId);
 
-    @Query("SELECT CAST(f.id.occurredAt AS date) as date, COUNT(DISTINCT f.userId) as count " +
-            "FROM FactActivity f " +
-            "WHERE f.tenantId = :tenantId AND f.id.occurredAt >= :startDate " +
-            "GROUP BY CAST(f.id.occurredAt AS date) " +
-            "ORDER BY date")
-    List<Object[]> countDailyActiveUsers(@Param("tenantId") String tenantId,
-            @Param("startDate") LocalDateTime startDate);
+        @Query("SELECT new com.openforum.datalake.dto.DailyActiveUsersPoint(CAST(f.id.occurredAt AS date), COUNT(DISTINCT f.userId)) "
+                        +
+                        "FROM FactActivity f " +
+                        "WHERE f.tenantId = :tenantId AND f.id.occurredAt >= :startDate " +
+                        "GROUP BY CAST(f.id.occurredAt AS date) " +
+                        "ORDER BY CAST(f.id.occurredAt AS date)")
+        List<com.openforum.datalake.dto.DailyActiveUsersPoint> countDailyActiveUsers(@Param("tenantId") String tenantId,
+                        @Param("startDate") LocalDateTime startDate);
 
-    @Query("SELECT f.userId, f.tenantId, COUNT(f) FROM FactActivity f WHERE f.id.occurredAt >= :startDate GROUP BY f.userId, f.tenantId")
-    List<Object[]> findUserActivityStats(@Param("startDate") LocalDateTime startDate);
+        @Query("SELECT f.userId, f.tenantId, COUNT(f) FROM FactActivity f WHERE f.id.occurredAt >= :startDate GROUP BY f.userId, f.tenantId")
+        List<Object[]> findUserActivityStats(@Param("startDate") LocalDateTime startDate);
 }

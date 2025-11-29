@@ -23,10 +23,12 @@ public class DimMemberHealth {
     private Integer healthScore;
 
     @Column(name = "churn_risk")
-    private String churnRisk;
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    private ChurnRisk churnRisk;
 
     @Column(name = "engagement_level")
-    private String engagementLevel;
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    private EngagementLevel engagementLevel;
 
     @Column(name = "calculated_at")
     private LocalDateTime calculatedAt;
@@ -34,7 +36,8 @@ public class DimMemberHealth {
     public DimMemberHealth() {
     }
 
-    public DimMemberHealth(UUID userId, String tenantId, Integer healthScore, String churnRisk, String engagementLevel,
+    public DimMemberHealth(UUID userId, String tenantId, Integer healthScore, ChurnRisk churnRisk,
+            EngagementLevel engagementLevel,
             LocalDateTime calculatedAt) {
         this.userId = userId;
         this.tenantId = tenantId;
@@ -72,19 +75,19 @@ public class DimMemberHealth {
         this.healthScore = healthScore;
     }
 
-    public String getChurnRisk() {
+    public ChurnRisk getChurnRisk() {
         return churnRisk;
     }
 
-    public void setChurnRisk(String churnRisk) {
+    public void setChurnRisk(ChurnRisk churnRisk) {
         this.churnRisk = churnRisk;
     }
 
-    public String getEngagementLevel() {
+    public EngagementLevel getEngagementLevel() {
         return engagementLevel;
     }
 
-    public void setEngagementLevel(String engagementLevel) {
+    public void setEngagementLevel(EngagementLevel engagementLevel) {
         this.engagementLevel = engagementLevel;
     }
 
@@ -100,8 +103,8 @@ public class DimMemberHealth {
         private UUID userId;
         private String tenantId;
         private Integer healthScore;
-        private String churnRisk;
-        private String engagementLevel;
+        private ChurnRisk churnRisk;
+        private EngagementLevel engagementLevel;
         private LocalDateTime calculatedAt;
 
         public Builder userId(UUID userId) {
@@ -119,12 +122,12 @@ public class DimMemberHealth {
             return this;
         }
 
-        public Builder churnRisk(String churnRisk) {
+        public Builder churnRisk(ChurnRisk churnRisk) {
             this.churnRisk = churnRisk;
             return this;
         }
 
-        public Builder engagementLevel(String engagementLevel) {
+        public Builder engagementLevel(EngagementLevel engagementLevel) {
             this.engagementLevel = engagementLevel;
             return this;
         }

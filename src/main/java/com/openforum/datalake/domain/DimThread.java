@@ -36,7 +36,8 @@ public class DimThread {
     private String title;
 
     @Column(name = "status")
-    private String status;
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    private ThreadStatus status;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "tags", columnDefinition = "jsonb")
@@ -60,7 +61,7 @@ public class DimThread {
     public DimThread() {
     }
 
-    public DimThread(UUID threadId, String tenantId, UUID categoryId, UUID authorId, String title, String status,
+    public DimThread(UUID threadId, String tenantId, UUID categoryId, UUID authorId, String title, ThreadStatus status,
             List<String> tags, LocalDateTime createdAt, LocalDateTime lastActivityAt, Integer responseTimeMinutes,
             Boolean isAnswered, Integer replyCount) {
         this.threadId = threadId;
@@ -121,11 +122,11 @@ public class DimThread {
         this.title = title;
     }
 
-    public String getStatus() {
+    public ThreadStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ThreadStatus status) {
         this.status = status;
     }
 
@@ -188,7 +189,7 @@ public class DimThread {
         thread.setCategoryId(UUID.fromString(json.get("categoryId").asText()));
         thread.setAuthorId(UUID.fromString(json.get("authorId").asText()));
         thread.setTitle(json.get("title").asText());
-        thread.setStatus("OPEN");
+        thread.setStatus(ThreadStatus.OPEN);
 
         List<String> tags = new ArrayList<>();
         if (json.has("tags")) {
@@ -210,7 +211,7 @@ public class DimThread {
         private UUID categoryId;
         private UUID authorId;
         private String title;
-        private String status;
+        private ThreadStatus status;
         private List<String> tags;
         private LocalDateTime createdAt;
         private LocalDateTime lastActivityAt;
@@ -243,7 +244,7 @@ public class DimThread {
             return this;
         }
 
-        public Builder status(String status) {
+        public Builder status(ThreadStatus status) {
             this.status = status;
             return this;
         }

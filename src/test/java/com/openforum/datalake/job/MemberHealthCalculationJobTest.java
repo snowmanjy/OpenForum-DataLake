@@ -1,6 +1,8 @@
 package com.openforum.datalake.job;
 
 import com.openforum.datalake.domain.DimMemberHealth;
+import com.openforum.datalake.domain.EngagementLevel;
+import com.openforum.datalake.domain.ChurnRisk;
 import com.openforum.datalake.repository.DimMemberHealthRepository;
 import com.openforum.datalake.repository.FactActivityRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,8 +62,8 @@ class MemberHealthCalculationJobTest {
         assertThat(savedHealth.getUserId()).isEqualTo(userId);
         assertThat(savedHealth.getTenantId()).isEqualTo(tenantId);
         assertThat(savedHealth.getHealthScore()).isEqualTo(85);
-        assertThat(savedHealth.getEngagementLevel()).isEqualTo("CHAMPION");
-        assertThat(savedHealth.getChurnRisk()).isEqualTo("LOW");
+        assertThat(savedHealth.getEngagementLevel()).isEqualTo(EngagementLevel.CHAMPION);
+        assertThat(savedHealth.getChurnRisk()).isEqualTo(ChurnRisk.LOW);
     }
 
     @Test
@@ -85,8 +87,8 @@ class MemberHealthCalculationJobTest {
 
         DimMemberHealth savedHealth = healthCaptor.getValue();
         assertThat(savedHealth.getHealthScore()).isEqualTo(5);
-        assertThat(savedHealth.getEngagementLevel()).isEqualTo("LURKER");
-        assertThat(savedHealth.getChurnRisk()).isEqualTo("HIGH");
+        assertThat(savedHealth.getEngagementLevel()).isEqualTo(EngagementLevel.LURKER);
+        assertThat(savedHealth.getChurnRisk()).isEqualTo(ChurnRisk.HIGH);
     }
 
     @Test

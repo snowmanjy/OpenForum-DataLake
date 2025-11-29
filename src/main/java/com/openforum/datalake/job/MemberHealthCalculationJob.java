@@ -1,6 +1,8 @@
 package com.openforum.datalake.job;
 
 import com.openforum.datalake.domain.DimMemberHealth;
+import com.openforum.datalake.domain.EngagementLevel;
+import com.openforum.datalake.domain.ChurnRisk;
 import com.openforum.datalake.repository.DimMemberHealthRepository;
 import com.openforum.datalake.repository.FactActivityRepository;
 import org.slf4j.Logger;
@@ -41,8 +43,8 @@ public class MemberHealthCalculationJob {
             Long activityCount = (Long) row[2];
 
             int score = calculateScore(activityCount);
-            String engagementLevel = determineEngagementLevel(score);
-            String churnRisk = determineChurnRisk(score);
+            EngagementLevel engagementLevel = determineEngagementLevel(score);
+            ChurnRisk churnRisk = determineChurnRisk(score);
 
             DimMemberHealth health = new DimMemberHealth();
             health.setUserId(userId);
@@ -62,19 +64,19 @@ public class MemberHealthCalculationJob {
         return (int) Math.min(activityCount, 100);
     }
 
-    private String determineEngagementLevel(int score) {
+    private EngagementLevel determineEngagementLevel(int score) {
         if (score >= 80)
-            return "CHAMPION";
+            return EngagementLevel.CHAMPION;
         if (score >= 20)
-            return "CONTRIBUTOR";
-        return "LURKER";
+            return EngagementLevel.CONTRIBUTOR;
+        return EngagementLevel.LURKER;
     }
 
-    private String determineChurnRisk(int score) {
+    private ChurnRisk determineChurnRisk(int score) {
         if (score < 10)
-            return "HIGH";
+            return ChurnRisk.HIGH;
         if (score < 50)
-            return "MEDIUM";
-        return "LOW";
+            return ChurnRisk.MEDIUM;
+        return ChurnRisk.LOW;
     }
 }

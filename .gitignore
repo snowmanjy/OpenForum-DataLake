@@ -26,3 +26,6 @@ replay_pid*
 # build files
 target/
 .vscode/
+
+src/main/java/com/openforum/datalake/.DS_Store
+src/main/java/com/openforum/datalake/ingestor/.DS_Store

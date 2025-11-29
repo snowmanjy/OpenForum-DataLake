@@ -3,6 +3,7 @@ package com.openforum.datalake;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.datalake.repository.DimThreadRepository;
 import com.openforum.datalake.repository.FactActivityRepository;
+import com.openforum.datalake.domain.FactActivity;
 import com.openforum.datalake.ingestor.EventEnvelope;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,5 +113,29 @@ class DataLakeIntegrationTest {
             assertThat(thread.getReplyCount()).isEqualTo(1);
             assertThat(factActivityRepository.count()).isEqualTo(2);
         });
+    }
+
+    @Test
+    void testShouldRejectDuplicateEventId() {
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now();
+
+        FactActivity fact1 = new FactActivity();
+        fact1.setId(new FactActivity.FactActivityId(UUID.randomUUID(), now));
+        fact1.setEventId(eventId);
+        fact1.setTenantId("tenant-1");
+        fact1.setActivityType("TEST");
+        factActivityRepository.save(fact1);
+
+        FactActivity fact2 = new FactActivity();
+        fact2.setId(new FactActivity.FactActivityId(UUID.randomUUID(), now));
+        fact2.setEventId(eventId); // Same eventId
+        fact2.setTenantId("tenant-1");
+        fact2.setActivityType("TEST");
+
+        org.junit.jupiter.api.Assertions.assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> {
+                    factActivityRepository.save(fact2);
+                });
     }
 }
