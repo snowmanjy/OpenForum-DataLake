@@ -107,3 +107,13 @@
 ### Step 3: Security
 * **Auth:** Validates JWT signed by SaaS Control Plane.
 * **Isolation:** Mandatory `tenant_id` filter on ALL queries.
+
+## 6. Implementation Details for the Data Lake:
+
+* No Lombok.
+
+* Kafka DTOs: Use Java records (Immutable).
+
+* JPA Entities: Public constructors are allowed. Use standard Getters/Setters.
+
+* Mapping: Create static from(Event e) helper methods on the Entities to handle the mapping logic cleanly.
