@@ -86,34 +86,21 @@ class KafkaEventConsumerTest {
         String tenantId = "tenant-1";
         LocalDateTime now = LocalDateTime.now();
 
-        // Create a list of threads
-        var threads = objectMapper.createArrayNode();
-
-        ObjectNode thread1 = objectMapper.createObjectNode();
-        UUID threadId1 = UUID.randomUUID();
-        thread1.put("threadId", threadId1.toString());
-        thread1.put("categoryId", UUID.randomUUID().toString());
-        thread1.put("authorId", UUID.randomUUID().toString());
-        thread1.put("title", "Imported Thread 1");
-        thread1.put("createdAt", now.toString());
-        threads.add(thread1);
-
-        ObjectNode thread2 = objectMapper.createObjectNode();
-        UUID threadId2 = UUID.randomUUID();
-        thread2.put("threadId", threadId2.toString());
-        thread2.put("categoryId", UUID.randomUUID().toString());
-        thread2.put("authorId", UUID.randomUUID().toString());
-        thread2.put("title", "Imported Thread 2");
-        thread2.put("createdAt", now.toString());
-        threads.add(thread2);
+        ObjectNode thread = objectMapper.createObjectNode();
+        UUID threadId = UUID.randomUUID();
+        thread.put("threadId", threadId.toString());
+        thread.put("categoryId", UUID.randomUUID().toString());
+        thread.put("authorId", UUID.randomUUID().toString());
+        thread.put("title", "Imported Thread");
+        thread.put("createdAt", now.toString());
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
                 "ThreadImported",
                 tenantId,
-                null, // Aggregate ID might be null for bulk import
+                null,
                 now,
-                threads);
+                thread);
         String message = objectMapper.writeValueAsString(event);
 
         when(factActivityRepository.existsByEventId(eventId)).thenReturn(false);
@@ -123,17 +110,205 @@ class KafkaEventConsumerTest {
 
         // Then
         ArgumentCaptor<DimThread> threadCaptor = ArgumentCaptor.forClass(DimThread.class);
-        verify(dimThreadRepository, org.mockito.Mockito.times(2)).save(threadCaptor.capture());
-
-        assertThat(threadCaptor.getAllValues()).hasSize(2);
-        assertThat(threadCaptor.getAllValues().get(0).getThreadId()).isEqualTo(threadId1);
-        assertThat(threadCaptor.getAllValues().get(1).getThreadId()).isEqualTo(threadId2);
+        verify(dimThreadRepository).save(threadCaptor.capture());
+        assertThat(threadCaptor.getValue().getThreadId()).isEqualTo(threadId);
 
         ArgumentCaptor<FactActivity> factCaptor = ArgumentCaptor.forClass(FactActivity.class);
-        verify(factActivityRepository, org.mockito.Mockito.times(2)).save(factCaptor.capture());
+        verify(factActivityRepository).save(factCaptor.capture());
+        assertThat(factCaptor.getValue().getActivityType()).isEqualTo("THREAD_IMPORTED");
+    }
 
-        assertThat(factCaptor.getAllValues()).hasSize(2);
-        assertThat(factCaptor.getAllValues().get(0).getActivityType()).isEqualTo("THREAD_IMPORTED");
-        assertThat(factCaptor.getAllValues().get(1).getActivityType()).isEqualTo("THREAD_IMPORTED");
+    @Test
+    void shouldProcessPostImportedEvent() throws Exception {
+        // Given
+        UUID eventId = UUID.randomUUID();
+        String tenantId = "tenant-1";
+        LocalDateTime now = LocalDateTime.now();
+        UUID threadId = UUID.randomUUID();
+
+        ObjectNode post = objectMapper.createObjectNode();
+        post.put("postId", UUID.randomUUID().toString());
+        post.put("threadId", threadId.toString());
+        post.put("authorId", UUID.randomUUID().toString());
+        post.put("content", "Imported Post Content");
+        post.put("createdAt", now.toString());
+
+        EventEnvelope event = new EventEnvelope(
+                eventId,
+                "PostImported",
+                tenantId,
+                null,
+                now,
+                post);
+        String message = objectMapper.writeValueAsString(event);
+
+        when(factActivityRepository.existsByEventId(eventId)).thenReturn(false);
+        // Mock DimThread lookup for update
+        DimThread mockThread = new DimThread();
+        mockThread.setThreadId(threadId);
+        mockThread.setReplyCount(0);
+        mockThread.setCreatedAt(now.minusHours(1));
+        when(dimThreadRepository.findById(threadId)).thenReturn(java.util.Optional.of(mockThread));
+
+        // When
+        consumer.consume(message);
+
+        // Then
+        ArgumentCaptor<DimThread> threadCaptor = ArgumentCaptor.forClass(DimThread.class);
+        verify(dimThreadRepository).save(threadCaptor.capture());
+        assertThat(threadCaptor.getValue().getReplyCount()).isEqualTo(1);
+
+        ArgumentCaptor<FactActivity> factCaptor = ArgumentCaptor.forClass(FactActivity.class);
+        verify(factActivityRepository).save(factCaptor.capture());
+        assertThat(factCaptor.getValue().getActivityType()).isEqualTo("POST_IMPORTED");
+    }
+
+    @Test
+    void shouldProcessPostCreatedEvent() throws Exception {
+        // Given
+        UUID eventId = UUID.randomUUID();
+        String tenantId = "tenant-1";
+        LocalDateTime now = LocalDateTime.now();
+        UUID threadId = UUID.randomUUID();
+
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("threadId", threadId.toString());
+        payload.put("postId", UUID.randomUUID().toString());
+        payload.put("authorId", UUID.randomUUID().toString());
+        payload.put("content", "Test Post");
+        payload.put("createdAt", now.toString());
+
+        EventEnvelope event = new EventEnvelope(
+                eventId,
+                "PostCreated",
+                tenantId,
+                null,
+                now,
+                payload);
+        String message = objectMapper.writeValueAsString(event);
+
+        when(factActivityRepository.existsByEventId(eventId)).thenReturn(false);
+
+        DimThread mockThread = new DimThread();
+        mockThread.setThreadId(threadId);
+        mockThread.setReplyCount(0);
+        mockThread.setCreatedAt(now.minusHours(1));
+        when(dimThreadRepository.findById(threadId)).thenReturn(java.util.Optional.of(mockThread));
+
+        // When
+        consumer.consume(message);
+
+        // Then
+        ArgumentCaptor<DimThread> threadCaptor = ArgumentCaptor.forClass(DimThread.class);
+        verify(dimThreadRepository).save(threadCaptor.capture());
+        assertThat(threadCaptor.getValue().getReplyCount()).isEqualTo(1);
+
+        ArgumentCaptor<FactActivity> factCaptor = ArgumentCaptor.forClass(FactActivity.class);
+        verify(factActivityRepository).save(factCaptor.capture());
+        assertThat(factCaptor.getValue().getActivityType()).isEqualTo("POST_CREATED");
+    }
+
+    @Test
+    void shouldProcessReactionAddedEvent() throws Exception {
+        // Given
+        UUID eventId = UUID.randomUUID();
+        String tenantId = "tenant-1";
+        LocalDateTime now = LocalDateTime.now();
+        UUID targetId = UUID.randomUUID();
+
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("reactionId", UUID.randomUUID().toString());
+        payload.put("targetId", targetId.toString());
+        payload.put("reactorId", UUID.randomUUID().toString());
+        payload.put("type", "LIKE");
+
+        EventEnvelope event = new EventEnvelope(
+                eventId,
+                "ReactionAdded",
+                tenantId,
+                null,
+                now,
+                payload);
+        String message = objectMapper.writeValueAsString(event);
+
+        when(factActivityRepository.existsByEventId(eventId)).thenReturn(false);
+
+        // When
+        consumer.consume(message);
+
+        // Then
+        ArgumentCaptor<FactActivity> factCaptor = ArgumentCaptor.forClass(FactActivity.class);
+        verify(factActivityRepository).save(factCaptor.capture());
+        assertThat(factCaptor.getValue().getActivityType()).isEqualTo("REACTION");
+        assertThat(factCaptor.getValue().getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    void shouldProcessSubscriptionCreatedEvent() throws Exception {
+        // Given
+        UUID eventId = UUID.randomUUID();
+        String tenantId = "tenant-1";
+        LocalDateTime now = LocalDateTime.now();
+        UUID targetId = UUID.randomUUID();
+
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("subscriptionId", UUID.randomUUID().toString());
+        payload.put("targetId", targetId.toString());
+        payload.put("subscriberId", UUID.randomUUID().toString());
+
+        EventEnvelope event = new EventEnvelope(
+                eventId,
+                "SubscriptionCreated",
+                tenantId,
+                null,
+                now,
+                payload);
+        String message = objectMapper.writeValueAsString(event);
+
+        when(factActivityRepository.existsByEventId(eventId)).thenReturn(false);
+
+        // When
+        consumer.consume(message);
+
+        // Then
+        ArgumentCaptor<FactActivity> factCaptor = ArgumentCaptor.forClass(FactActivity.class);
+        verify(factActivityRepository).save(factCaptor.capture());
+        assertThat(factCaptor.getValue().getActivityType()).isEqualTo("SUBSCRIPTION_CREATED");
+        assertThat(factCaptor.getValue().getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    void shouldSkipDuplicateEvent() throws Exception {
+        // Given
+        UUID eventId = UUID.randomUUID();
+        EventEnvelope event = new EventEnvelope(
+                eventId,
+                "ThreadCreated",
+                "tenant-1",
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                objectMapper.createObjectNode());
+        String message = objectMapper.writeValueAsString(event);
+
+        when(factActivityRepository.existsByEventId(eventId)).thenReturn(true);
+
+        // When
+        consumer.consume(message);
+
+        // Then
+        verify(factActivityRepository, org.mockito.Mockito.never()).save(any(FactActivity.class));
+    }
+
+    @Test
+    void shouldHandleJsonProcessingException() {
+        // Given
+        String invalidJson = "{invalid-json}";
+
+        // When
+        consumer.consume(invalidJson);
+
+        // Then
+        // No exception thrown, error logged
+        verify(factActivityRepository, org.mockito.Mockito.never()).existsByEventId(any());
     }
 }

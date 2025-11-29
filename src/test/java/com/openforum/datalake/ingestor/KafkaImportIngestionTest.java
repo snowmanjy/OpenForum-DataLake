@@ -24,7 +24,7 @@ import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @Testcontainers
-class KafkaBatchIngestionTest {
+class KafkaImportIngestionTest {
 
     @Container
     @ServiceConnection
@@ -53,22 +53,17 @@ class KafkaBatchIngestionTest {
     }
 
     @Test
-    void shouldIngestBatchOfThreads() throws Exception {
-        String tenantId = "tenant-batch-1";
+    void shouldIngestImportedThread() throws Exception {
+        String tenantId = "tenant-import-1";
         LocalDateTime now = LocalDateTime.now();
         UUID eventId = UUID.randomUUID();
 
-        // Create 5 threads
-        ArrayNode threads = objectMapper.createArrayNode();
-        for (int i = 0; i < 5; i++) {
-            ObjectNode thread = objectMapper.createObjectNode();
-            thread.put("threadId", UUID.randomUUID().toString());
-            thread.put("categoryId", UUID.randomUUID().toString());
-            thread.put("authorId", UUID.randomUUID().toString());
-            thread.put("title", "Imported Thread " + i);
-            thread.put("createdAt", now.toString());
-            threads.add(thread);
-        }
+        ObjectNode thread = objectMapper.createObjectNode();
+        thread.put("threadId", UUID.randomUUID().toString());
+        thread.put("categoryId", UUID.randomUUID().toString());
+        thread.put("authorId", UUID.randomUUID().toString());
+        thread.put("title", "Imported Thread Single");
+        thread.put("createdAt", now.toString());
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
@@ -76,14 +71,14 @@ class KafkaBatchIngestionTest {
                 tenantId,
                 null,
                 now,
-                threads);
+                thread);
 
         kafkaTemplate.send("forum-events-v1", objectMapper.writeValueAsString(event));
 
-        // Wait for DimThread count to increase by 5
+        // Wait for DimThread count to increase by 1
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             long count = dimThreadRepository.countTotalThreads(tenantId);
-            assertThat(count).isEqualTo(5);
+            assertThat(count).isEqualTo(1);
         });
     }
 }
