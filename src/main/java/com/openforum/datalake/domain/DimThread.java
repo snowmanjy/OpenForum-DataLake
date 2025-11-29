@@ -178,23 +178,27 @@ public class DimThread {
     }
 
     public static DimThread from(EventEnvelope event) {
+        return from(event.payload(), event.tenantId(), event.occurredAt());
+    }
+
+    public static DimThread from(JsonNode json, String tenantId, LocalDateTime occurredAt) {
         DimThread thread = new DimThread();
-        thread.setThreadId(UUID.fromString(event.payload().get("threadId").asText()));
-        thread.setTenantId(event.tenantId());
-        thread.setCategoryId(UUID.fromString(event.payload().get("categoryId").asText()));
-        thread.setAuthorId(UUID.fromString(event.payload().get("authorId").asText()));
-        thread.setTitle(event.payload().get("title").asText());
+        thread.setThreadId(UUID.fromString(json.get("threadId").asText()));
+        thread.setTenantId(tenantId);
+        thread.setCategoryId(UUID.fromString(json.get("categoryId").asText()));
+        thread.setAuthorId(UUID.fromString(json.get("authorId").asText()));
+        thread.setTitle(json.get("title").asText());
         thread.setStatus("OPEN");
 
         List<String> tags = new ArrayList<>();
-        if (event.payload().has("tags")) {
-            event.payload().get("tags").forEach(t -> tags.add(t.asText()));
+        if (json.has("tags")) {
+            json.get("tags").forEach(t -> tags.add(t.asText()));
         }
         thread.setTags(tags);
 
-        LocalDateTime createdAt = LocalDateTime.parse(event.payload().get("createdAt").asText());
+        LocalDateTime createdAt = LocalDateTime.parse(json.get("createdAt").asText());
         thread.setCreatedAt(createdAt);
-        thread.setLastActivityAt(createdAt);
+        thread.setLastActivityAt(occurredAt);
         thread.setReplyCount(0);
         thread.setIsAnswered(false);
         return thread;

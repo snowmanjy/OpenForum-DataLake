@@ -71,6 +71,9 @@ public class KafkaEventConsumer {
                 case "SubscriptionCreated":
                     handleSubscriptionCreated(event);
                     break;
+                case "ThreadImported":
+                    handleThreadImported(event);
+                    break;
                 default:
                     log.info("Ignored event type: {}", event.type());
             }
@@ -122,5 +125,48 @@ public class KafkaEventConsumer {
         UUID targetId = UUID.fromString(event.payload().get("targetId").asText());
         FactActivity fact = FactActivity.from(event, "SUBSCRIPTION_CREATED", targetId);
         factActivityRepository.save(fact);
+    }
+
+    private void handleThreadImported(EventEnvelope event) {
+        JsonNode payload = event.payload();
+        if (payload.isArray()) {
+            for (JsonNode threadNode : payload) {
+                // Create DimThread
+                DimThread thread = DimThread.from(threadNode, event.tenantId(), event.occurredAt());
+                dimThreadRepository.save(thread);
+
+                // Create FactActivity for each thread
+                // We need to create a unique event ID for each fact if we want to track them
+                // individually,
+                // but FactActivity.from uses the envelope's eventId.
+                // Since this is one event (Import) resulting in multiple facts, we might have a
+                // PK conflict if we use the same eventId for all.
+                // FactActivityId is (eventId, occurredAt).
+                // If we insert multiple rows with same eventId, we violate PK.
+                // However, FactActivity represents the *Event*.
+                // If one event caused multiple things, maybe we should only have ONE
+                // FactActivity for the "Import" event?
+                // OR, we treat each imported thread as a separate activity?
+                // The user request says: "insert a DimThread and FactActivity for each item".
+                // This implies we need distinct FactActivities.
+                // We can generate a derived eventId or use the threadId as part of the key?
+                // FactActivityId is (eventId, occurredAt).
+                // If we strictly follow "one FactActivity per item", we need unique eventIds.
+                // Let's generate a new UUID for the FactActivity to avoid PK collision,
+                // effectively treating the batch item as a sub-event.
+
+                UUID subEventId = UUID.randomUUID();
+                FactActivity fact = new FactActivity();
+                fact.setId(
+                        new com.openforum.datalake.domain.FactActivity.FactActivityId(subEventId, event.occurredAt()));
+                fact.setEventId(subEventId);
+                fact.setActivityType("THREAD_IMPORTED");
+                fact.setTenantId(event.tenantId());
+                fact.setTargetId(thread.getThreadId());
+                fact.setMetadata(objectMapper.convertValue(threadNode, java.util.Map.class));
+
+                factActivityRepository.save(fact);
+            }
+        }
     }
 }
