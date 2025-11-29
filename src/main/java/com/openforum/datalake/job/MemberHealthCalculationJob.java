@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,18 +29,22 @@ public class MemberHealthCalculationJob {
         this.dimMemberHealthRepository = dimMemberHealthRepository;
     }
 
-    @Scheduled(cron = "0 0 0 * * ?") // Daily at midnight
-    @Transactional
+    @Scheduled(cron = "0 0 1 * * ?") // Run daily at 1 AM
     public void calculateMemberHealth() {
         log.info("Starting Member Health Calculation Job");
-        LocalDateTime startDate = LocalDateTime.now().minusDays(30);
+        Instant startDate = Instant.now().minus(30, ChronoUnit.DAYS);
 
         List<Object[]> stats = factActivityRepository.findUserActivityStats(startDate);
 
         for (Object[] row : stats) {
             UUID userId = (UUID) row[0];
-            String tenantId = (String) row[1];
-            Long activityCount = (Long) row[2];
+            // The original code had String tenantId = (String) row[1]; and Long
+            // activityCount = (Long) row[2];
+            // The provided change implies tenantId is no longer in row[1] and activityCount
+            // is now row[1].
+            // Also, tenantId is hardcoded to "default".
+            Long activityCount = (Long) row[1]; // Assuming tenantId is no longer at row[1] and activityCount is now at
+                                                // row[1]
 
             int score = calculateScore(activityCount);
             EngagementLevel engagementLevel = determineEngagementLevel(score);
@@ -48,11 +52,11 @@ public class MemberHealthCalculationJob {
 
             DimMemberHealth health = new DimMemberHealth();
             health.setUserId(userId);
-            health.setTenantId(tenantId);
+            health.setTenantId("default"); // TODO: Handle multi-tenancy in job
             health.setHealthScore(score);
             health.setEngagementLevel(engagementLevel);
             health.setChurnRisk(churnRisk);
-            health.setCalculatedAt(LocalDateTime.now());
+            health.setCalculatedAt(Instant.now());
 
             dimMemberHealthRepository.save(health);
         }

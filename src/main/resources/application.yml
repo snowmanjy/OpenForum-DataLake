@@ -36,4 +36,4 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://localhost:8080/.well-known/jwks.json # Placeholder for SaaS Platform JWK Set URI
+          public-key-location: classpath:public-key.pem

@@ -3,7 +3,7 @@
 CREATE TABLE dim_users (
     user_id UUID PRIMARY KEY,
     tenant_id VARCHAR(255) NOT NULL,
-    join_date TIMESTAMP,
+    join_date TIMESTAMP WITH TIME ZONE,
     reputation INTEGER,
     is_bot BOOLEAN DEFAULT FALSE
 );
@@ -22,8 +22,8 @@ CREATE TABLE dim_threads (
     title VARCHAR(255),
     status VARCHAR(50),
     tags JSONB,
-    created_at TIMESTAMP,
-    last_activity_at TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE,
+    last_activity_at TIMESTAMP WITH TIME ZONE,
     response_time_minutes INTEGER,
     is_answered BOOLEAN DEFAULT FALSE,
     reply_count INTEGER DEFAULT 0
@@ -37,7 +37,7 @@ CREATE TABLE dim_member_health (
     health_score INTEGER,
     churn_risk VARCHAR(50), -- LOW, MEDIUM, HIGH
     engagement_level VARCHAR(50), -- LURKER, CONTRIBUTOR, CHAMPION
-    calculated_at TIMESTAMP
+    calculated_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Fact Table with Partitioning
@@ -49,7 +49,7 @@ CREATE TABLE fact_activity (
     user_id UUID,
     activity_type VARCHAR(50), -- POST_CREATED, THREAD_VIEW, etc.
     target_id UUID,
-    occurred_at TIMESTAMP NOT NULL,
+    occurred_at TIMESTAMP WITH TIME ZONE NOT NULL,
     metadata JSONB,
     PRIMARY KEY (id, occurred_at), -- Partition key must be part of PK
     UNIQUE (event_id, occurred_at) -- Unique constraint must include partition key

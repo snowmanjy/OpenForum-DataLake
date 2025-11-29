@@ -10,7 +10,7 @@ import org.hibernate.type.SqlTypes;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.openforum.datalake.ingestor.EventEnvelope;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,37 +32,34 @@ public class DimThread {
     @Column(name = "author_id")
     private UUID authorId;
 
-    @Column(name = "title")
     private String title;
 
-    @Column(name = "status")
-    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
-    private ThreadStatus status;
+    private String status; // OPEN, CLOSED, SOLVED
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "tags", columnDefinition = "jsonb")
+    @Column(columnDefinition = "jsonb")
     private List<String> tags;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "last_activity_at")
-    private LocalDateTime lastActivityAt;
+    private Instant lastActivityAt;
 
     @Column(name = "response_time_minutes")
     private Integer responseTimeMinutes;
 
     @Column(name = "is_answered")
-    private Boolean isAnswered;
+    private Boolean isAnswered = false;
 
     @Column(name = "reply_count")
-    private Integer replyCount;
+    private Integer replyCount = 0;
 
     public DimThread() {
     }
 
-    public DimThread(UUID threadId, String tenantId, UUID categoryId, UUID authorId, String title, ThreadStatus status,
-            List<String> tags, LocalDateTime createdAt, LocalDateTime lastActivityAt, Integer responseTimeMinutes,
+    public DimThread(UUID threadId, String tenantId, UUID categoryId, UUID authorId, String title, String status,
+            List<String> tags, Instant createdAt, Instant lastActivityAt, Integer responseTimeMinutes,
             Boolean isAnswered, Integer replyCount) {
         this.threadId = threadId;
         this.tenantId = tenantId;
@@ -122,11 +119,11 @@ public class DimThread {
         this.title = title;
     }
 
-    public ThreadStatus getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(ThreadStatus status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
@@ -138,19 +135,19 @@ public class DimThread {
         this.tags = tags;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getLastActivityAt() {
+    public Instant getLastActivityAt() {
         return lastActivityAt;
     }
 
-    public void setLastActivityAt(LocalDateTime lastActivityAt) {
+    public void setLastActivityAt(Instant lastActivityAt) {
         this.lastActivityAt = lastActivityAt;
     }
 
@@ -182,42 +179,49 @@ public class DimThread {
         return from(event.payload(), event.tenantId(), event.occurredAt());
     }
 
-    public static DimThread from(JsonNode json, String tenantId, LocalDateTime occurredAt) {
-        DimThread thread = new DimThread();
-        thread.setThreadId(UUID.fromString(json.get("threadId").asText()));
-        thread.setTenantId(tenantId);
-        thread.setCategoryId(UUID.fromString(json.get("categoryId").asText()));
-        thread.setAuthorId(UUID.fromString(json.get("authorId").asText()));
-        thread.setTitle(json.get("title").asText());
-        thread.setStatus(ThreadStatus.OPEN);
+    // Static Factory Method for Mapping
+    public static DimThread from(JsonNode json, String tenantId, Instant occurredAt) {
+        UUID threadId = UUID.fromString(json.get("threadId").asText());
+        UUID categoryId = json.has("categoryId") ? UUID.fromString(json.get("categoryId").asText()) : null;
+        UUID authorId = UUID.fromString(json.get("authorId").asText());
+        String title = json.get("title").asText();
+        String status = "OPEN"; // Default status
 
+        // Parse tags
         List<String> tags = new ArrayList<>();
         if (json.has("tags")) {
             json.get("tags").forEach(t -> tags.add(t.asText()));
         }
-        thread.setTags(tags);
 
-        LocalDateTime createdAt = LocalDateTime.parse(json.get("createdAt").asText());
-        thread.setCreatedAt(createdAt);
-        thread.setLastActivityAt(occurredAt);
-        thread.setReplyCount(0);
-        thread.setIsAnswered(false);
-        return thread;
+        Instant createdAt = Instant.parse(json.get("createdAt").asText());
+
+        return new DimThread.Builder()
+                .threadId(threadId)
+                .tenantId(tenantId)
+                .categoryId(categoryId)
+                .authorId(authorId)
+                .title(title)
+                .status(status)
+                .tags(tags)
+                .createdAt(createdAt)
+                .lastActivityAt(occurredAt) // Initially last activity is creation time
+                .build();
     }
 
+    // Builder Pattern
     public static class Builder {
         private UUID threadId;
         private String tenantId;
         private UUID categoryId;
         private UUID authorId;
         private String title;
-        private ThreadStatus status;
+        private String status;
         private List<String> tags;
-        private LocalDateTime createdAt;
-        private LocalDateTime lastActivityAt;
+        private Instant createdAt;
+        private Instant lastActivityAt;
         private Integer responseTimeMinutes;
-        private Boolean isAnswered;
-        private Integer replyCount;
+        private Boolean isAnswered = false;
+        private Integer replyCount = 0;
 
         public Builder threadId(UUID threadId) {
             this.threadId = threadId;
@@ -244,7 +248,7 @@ public class DimThread {
             return this;
         }
 
-        public Builder status(ThreadStatus status) {
+        public Builder status(String status) {
             this.status = status;
             return this;
         }
@@ -254,12 +258,12 @@ public class DimThread {
             return this;
         }
 
-        public Builder createdAt(LocalDateTime createdAt) {
+        public Builder createdAt(Instant createdAt) {
             this.createdAt = createdAt;
             return this;
         }
 
-        public Builder lastActivityAt(LocalDateTime lastActivityAt) {
+        public Builder lastActivityAt(Instant lastActivityAt) {
             this.lastActivityAt = lastActivityAt;
             return this;
         }

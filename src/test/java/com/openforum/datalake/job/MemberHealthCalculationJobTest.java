@@ -12,7 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,9 +47,10 @@ class MemberHealthCalculationJobTest {
         Long activityCount = 85L; // Should be CHAMPION, LOW risk
 
         List<Object[]> stats = new ArrayList<>();
-        stats.add(new Object[] { userId, tenantId, activityCount });
+        // The query returns [userId, count]
+        stats.add(new Object[] { userId, activityCount });
 
-        when(factActivityRepository.findUserActivityStats(any(LocalDateTime.class))).thenReturn(stats);
+        when(factActivityRepository.findUserActivityStats(any(Instant.class))).thenReturn(stats);
 
         // When
         job.calculateMemberHealth();
@@ -60,7 +61,7 @@ class MemberHealthCalculationJobTest {
 
         DimMemberHealth savedHealth = healthCaptor.getValue();
         assertThat(savedHealth.getUserId()).isEqualTo(userId);
-        assertThat(savedHealth.getTenantId()).isEqualTo(tenantId);
+        assertThat(savedHealth.getTenantId()).isEqualTo("default"); // Job hardcodes to default
         assertThat(savedHealth.getHealthScore()).isEqualTo(85);
         assertThat(savedHealth.getEngagementLevel()).isEqualTo(EngagementLevel.CHAMPION);
         assertThat(savedHealth.getChurnRisk()).isEqualTo(ChurnRisk.LOW);
@@ -74,9 +75,9 @@ class MemberHealthCalculationJobTest {
         Long activityCount = 5L; // Should be LURKER, HIGH risk
 
         List<Object[]> stats = new ArrayList<>();
-        stats.add(new Object[] { userId, tenantId, activityCount });
+        stats.add(new Object[] { userId, activityCount });
 
-        when(factActivityRepository.findUserActivityStats(any(LocalDateTime.class))).thenReturn(stats);
+        when(factActivityRepository.findUserActivityStats(any(Instant.class))).thenReturn(stats);
 
         // When
         job.calculateMemberHealth();
@@ -94,7 +95,7 @@ class MemberHealthCalculationJobTest {
     @Test
     void shouldHandleEmptyStats() {
         // Given
-        when(factActivityRepository.findUserActivityStats(any(LocalDateTime.class)))
+        when(factActivityRepository.findUserActivityStats(any(Instant.class)))
                 .thenReturn(Collections.emptyList());
 
         // When

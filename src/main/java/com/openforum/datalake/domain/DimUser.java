@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -20,18 +20,17 @@ public class DimUser {
     private String tenantId;
 
     @Column(name = "join_date")
-    private LocalDateTime joinDate;
+    private Instant joinDate;
 
-    @Column(name = "reputation")
     private Integer reputation;
 
     @Column(name = "is_bot")
-    private Boolean isBot;
+    private Boolean isBot = false;
 
     public DimUser() {
     }
 
-    public DimUser(UUID userId, String tenantId, LocalDateTime joinDate, Integer reputation, Boolean isBot) {
+    public DimUser(UUID userId, String tenantId, Instant joinDate, Integer reputation, Boolean isBot) {
         this.userId = userId;
         this.tenantId = tenantId;
         this.joinDate = joinDate;
@@ -39,9 +38,7 @@ public class DimUser {
         this.isBot = isBot;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+    // Getters and Setters
 
     public UUID getUserId() {
         return userId;
@@ -59,11 +56,11 @@ public class DimUser {
         this.tenantId = tenantId;
     }
 
-    public LocalDateTime getJoinDate() {
+    public Instant getJoinDate() {
         return joinDate;
     }
 
-    public void setJoinDate(LocalDateTime joinDate) {
+    public void setJoinDate(Instant joinDate) {
         this.joinDate = joinDate;
     }
 
@@ -83,12 +80,17 @@ public class DimUser {
         this.isBot = isBot;
     }
 
+    // Builder Pattern
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static class Builder {
         private UUID userId;
         private String tenantId;
-        private LocalDateTime joinDate;
+        private Instant joinDate;
         private Integer reputation;
-        private Boolean isBot;
+        private Boolean isBot = false;
 
         public Builder userId(UUID userId) {
             this.userId = userId;
@@ -100,7 +102,7 @@ public class DimUser {
             return this;
         }
 
-        public Builder joinDate(LocalDateTime joinDate) {
+        public Builder joinDate(Instant joinDate) {
             this.joinDate = joinDate;
             return this;
         }

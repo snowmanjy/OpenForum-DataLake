@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class AnalyticsController {
             @RequestParam(defaultValue = "day") String interval) {
         String tenantId = getTenantId(jwt);
         // Only DAU supported for now
-        LocalDateTime startDate = LocalDateTime.now().minusDays(30);
+        Instant startDate = Instant.now().minus(30, ChronoUnit.DAYS);
         return ResponseEntity.ok(factActivityRepository.countDailyActiveUsers(tenantId, startDate));
     }
 
@@ -117,7 +118,7 @@ public class AnalyticsController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "7") Integer days) {
         String tenantId = getTenantId(jwt);
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(days);
+        Instant cutoff = Instant.now().minus(days, ChronoUnit.DAYS);
         return ResponseEntity.ok(dimThreadRepository.findStaleThreads(tenantId, cutoff));
     }
 
@@ -126,7 +127,7 @@ public class AnalyticsController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "24") Integer hours) {
         String tenantId = getTenantId(jwt);
-        LocalDateTime cutoff = LocalDateTime.now().minusHours(hours);
+        Instant cutoff = Instant.now().minus(hours, ChronoUnit.HOURS);
         return ResponseEntity.ok(dimThreadRepository.findUnansweredThreads(tenantId, cutoff));
     }
 }

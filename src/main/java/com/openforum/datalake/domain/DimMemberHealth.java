@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.time.LocalDateTime;
+import java.time.Instant; // Changed from LocalDateTime
 import java.util.UUID;
 
 @Entity
@@ -31,14 +31,14 @@ public class DimMemberHealth {
     private EngagementLevel engagementLevel;
 
     @Column(name = "calculated_at")
-    private LocalDateTime calculatedAt;
+    private Instant calculatedAt; // Changed from LocalDateTime
 
     public DimMemberHealth() {
     }
 
     public DimMemberHealth(UUID userId, String tenantId, Integer healthScore, ChurnRisk churnRisk,
             EngagementLevel engagementLevel,
-            LocalDateTime calculatedAt) {
+            Instant calculatedAt) { // Changed from LocalDateTime
         this.userId = userId;
         this.tenantId = tenantId;
         this.healthScore = healthScore;
@@ -91,11 +91,11 @@ public class DimMemberHealth {
         this.engagementLevel = engagementLevel;
     }
 
-    public LocalDateTime getCalculatedAt() {
+    public Instant getCalculatedAt() { // Changed from LocalDateTime
         return calculatedAt;
     }
 
-    public void setCalculatedAt(LocalDateTime calculatedAt) {
+    public void setCalculatedAt(Instant calculatedAt) { // Changed from LocalDateTime
         this.calculatedAt = calculatedAt;
     }
 
@@ -105,7 +105,7 @@ public class DimMemberHealth {
         private Integer healthScore;
         private ChurnRisk churnRisk;
         private EngagementLevel engagementLevel;
-        private LocalDateTime calculatedAt;
+        private Instant calculatedAt; // Changed from LocalDateTime
 
         public Builder userId(UUID userId) {
             this.userId = userId;
@@ -132,7 +132,7 @@ public class DimMemberHealth {
             return this;
         }
 
-        public Builder calculatedAt(LocalDateTime calculatedAt) {
+        public Builder calculatedAt(Instant calculatedAt) { // Changed from LocalDateTime
             this.calculatedAt = calculatedAt;
             return this;
         }

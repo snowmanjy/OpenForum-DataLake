@@ -15,8 +15,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +48,7 @@ class AnalyticsControllerTest {
                 String tenantId = "tenant-1";
                 List<DailyActiveUsersPoint> stats = new ArrayList<>();
                 stats.add(new DailyActiveUsersPoint(LocalDate.parse("2023-10-01"), 10L));
-                when(factActivityRepository.countDailyActiveUsers(eq(tenantId), any(LocalDateTime.class)))
+                when(factActivityRepository.countDailyActiveUsers(eq(tenantId), any(Instant.class)))
                                 .thenReturn(stats);
 
                 mockMvc.perform(get("/analytics/v1/activity")
@@ -92,7 +92,7 @@ class AnalyticsControllerTest {
                 String tenantId = "tenant-1";
                 DimThread thread = new DimThread();
                 thread.setTitle("Stale Thread");
-                when(dimThreadRepository.findStaleThreads(eq(tenantId), any(LocalDateTime.class)))
+                when(dimThreadRepository.findStaleThreads(eq(tenantId), any(Instant.class)))
                                 .thenReturn(Collections.singletonList(thread));
 
                 mockMvc.perform(get("/analytics/v1/stale-threads")

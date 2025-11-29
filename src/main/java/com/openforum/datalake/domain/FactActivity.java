@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.datalake.ingestor.EventEnvelope;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -119,15 +119,16 @@ public class FactActivity {
     }
 
     public static class Builder {
-        private FactActivityId id;
+        private UUID id;
         private UUID eventId;
         private String tenantId;
         private UUID userId;
         private String activityType;
         private UUID targetId;
+        private Instant occurredAt;
         private Map<String, Object> metadata;
 
-        public Builder id(FactActivityId id) {
+        public Builder id(UUID id) {
             this.id = id;
             return this;
         }
@@ -157,13 +158,19 @@ public class FactActivity {
             return this;
         }
 
+        public Builder occurredAt(Instant occurredAt) {
+            this.occurredAt = occurredAt;
+            return this;
+        }
+
         public Builder metadata(Map<String, Object> metadata) {
             this.metadata = metadata;
             return this;
         }
 
         public FactActivity build() {
-            return new FactActivity(id, eventId, tenantId, userId, activityType, targetId, metadata);
+            return new FactActivity(new FactActivityId(id, occurredAt), eventId, tenantId, userId, activityType,
+                    targetId, metadata);
         }
     }
 
@@ -197,12 +204,12 @@ public class FactActivity {
         private UUID id;
 
         @Column(name = "occurred_at")
-        private LocalDateTime occurredAt;
+        private Instant occurredAt;
 
         public FactActivityId() {
         }
 
-        public FactActivityId(UUID id, LocalDateTime occurredAt) {
+        public FactActivityId(UUID id, Instant occurredAt) {
             this.id = id;
             this.occurredAt = occurredAt;
         }
@@ -215,11 +222,11 @@ public class FactActivity {
             this.id = id;
         }
 
-        public LocalDateTime getOccurredAt() {
+        public Instant getOccurredAt() {
             return occurredAt;
         }
 
-        public void setOccurredAt(LocalDateTime occurredAt) {
+        public void setOccurredAt(Instant occurredAt) {
             this.occurredAt = occurredAt;
         }
 

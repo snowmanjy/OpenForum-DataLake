@@ -16,7 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,7 +55,7 @@ class KafkaImportIngestionTest {
     @Test
     void shouldIngestImportedThread() throws Exception {
         String tenantId = "tenant-import-1";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         UUID eventId = UUID.randomUUID();
 
         ObjectNode thread = objectMapper.createObjectNode();
@@ -67,9 +67,8 @@ class KafkaImportIngestionTest {
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "ThreadImported",
                 tenantId,
-                null,
+                "ThreadImported",
                 now,
                 thread);
 

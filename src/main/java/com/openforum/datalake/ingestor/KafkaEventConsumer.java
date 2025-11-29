@@ -39,7 +39,7 @@ public class KafkaEventConsumer {
         System.out.println("Received message: " + message);
         try {
             EventEnvelope event = objectMapper.readValue(message, EventEnvelope.class);
-            log.info("Received event: {} type: {}", event.eventId(), event.type());
+            log.info("Received event: {} type: {}", event.eventId(), event.eventType());
 
             if (factActivityRepository.existsByEventId(event.eventId())) {
                 log.info("Event {} already processed. Skipping.", event.eventId());
@@ -58,7 +58,7 @@ public class KafkaEventConsumer {
 
     private void processEvent(EventEnvelope event) {
         try {
-            switch (event.type()) {
+            switch (event.eventType()) {
                 case "ThreadCreated":
                     handleThreadCreated(event);
                     break;
@@ -78,7 +78,7 @@ public class KafkaEventConsumer {
                     handlePostImported(event);
                     break;
                 default:
-                    log.info("Ignored event type: {}", event.type());
+                    log.info("Ignored event type: {}", event.eventType());
             }
         } catch (DataIntegrityViolationException e) {
             log.warn("Idempotency check failed (Duplicate): {}", event.eventId());

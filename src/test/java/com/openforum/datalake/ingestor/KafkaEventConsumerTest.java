@@ -13,7 +13,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,14 +53,13 @@ class KafkaEventConsumerTest {
         payload.put("categoryId", UUID.randomUUID().toString());
         payload.put("authorId", UUID.randomUUID().toString());
         payload.put("title", "Unit Test Thread");
-        payload.put("createdAt", LocalDateTime.now().toString());
+        payload.put("createdAt", Instant.now().toString());
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "ThreadCreated",
                 tenantId,
-                threadId,
-                LocalDateTime.now(),
+                "ThreadCreated",
+                Instant.now(),
                 payload);
         String message = objectMapper.writeValueAsString(event);
 
@@ -84,7 +84,7 @@ class KafkaEventConsumerTest {
         // Given
         UUID eventId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         ObjectNode thread = objectMapper.createObjectNode();
         UUID threadId = UUID.randomUUID();
@@ -96,9 +96,8 @@ class KafkaEventConsumerTest {
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "ThreadImported",
                 tenantId,
-                null,
+                "ThreadImported",
                 now,
                 thread);
         String message = objectMapper.writeValueAsString(event);
@@ -123,7 +122,7 @@ class KafkaEventConsumerTest {
         // Given
         UUID eventId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         UUID threadId = UUID.randomUUID();
 
         ObjectNode post = objectMapper.createObjectNode();
@@ -135,9 +134,8 @@ class KafkaEventConsumerTest {
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "PostImported",
                 tenantId,
-                null,
+                "PostImported",
                 now,
                 post);
         String message = objectMapper.writeValueAsString(event);
@@ -147,7 +145,7 @@ class KafkaEventConsumerTest {
         DimThread mockThread = new DimThread();
         mockThread.setThreadId(threadId);
         mockThread.setReplyCount(0);
-        mockThread.setCreatedAt(now.minusHours(1));
+        mockThread.setCreatedAt(now.minus(1, ChronoUnit.HOURS));
         when(dimThreadRepository.findById(threadId)).thenReturn(java.util.Optional.of(mockThread));
 
         // When
@@ -168,7 +166,7 @@ class KafkaEventConsumerTest {
         // Given
         UUID eventId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         UUID threadId = UUID.randomUUID();
 
         ObjectNode payload = objectMapper.createObjectNode();
@@ -180,9 +178,8 @@ class KafkaEventConsumerTest {
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "PostCreated",
                 tenantId,
-                null,
+                "PostCreated",
                 now,
                 payload);
         String message = objectMapper.writeValueAsString(event);
@@ -192,7 +189,7 @@ class KafkaEventConsumerTest {
         DimThread mockThread = new DimThread();
         mockThread.setThreadId(threadId);
         mockThread.setReplyCount(0);
-        mockThread.setCreatedAt(now.minusHours(1));
+        mockThread.setCreatedAt(now.minus(1, ChronoUnit.HOURS));
         when(dimThreadRepository.findById(threadId)).thenReturn(java.util.Optional.of(mockThread));
 
         // When
@@ -213,7 +210,7 @@ class KafkaEventConsumerTest {
         // Given
         UUID eventId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         UUID targetId = UUID.randomUUID();
 
         ObjectNode payload = objectMapper.createObjectNode();
@@ -224,9 +221,8 @@ class KafkaEventConsumerTest {
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "ReactionAdded",
                 tenantId,
-                null,
+                "ReactionAdded",
                 now,
                 payload);
         String message = objectMapper.writeValueAsString(event);
@@ -248,7 +244,7 @@ class KafkaEventConsumerTest {
         // Given
         UUID eventId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         UUID targetId = UUID.randomUUID();
 
         ObjectNode payload = objectMapper.createObjectNode();
@@ -258,9 +254,8 @@ class KafkaEventConsumerTest {
 
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "SubscriptionCreated",
                 tenantId,
-                null,
+                "SubscriptionCreated",
                 now,
                 payload);
         String message = objectMapper.writeValueAsString(event);
@@ -283,10 +278,9 @@ class KafkaEventConsumerTest {
         UUID eventId = UUID.randomUUID();
         EventEnvelope event = new EventEnvelope(
                 eventId,
-                "ThreadCreated",
                 "tenant-1",
-                UUID.randomUUID(),
-                LocalDateTime.now(),
+                "ThreadCreated",
+                Instant.now(),
                 objectMapper.createObjectNode());
         String message = objectMapper.writeValueAsString(event);
 

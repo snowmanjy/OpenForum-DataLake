@@ -17,7 +17,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -64,7 +65,7 @@ class DataLakeIntegrationTest {
         UUID authorId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // 1. Send ThreadCreated Event
         Map<String, Object> threadPayload = Map.of(
@@ -77,9 +78,8 @@ class DataLakeIntegrationTest {
 
         EventEnvelope threadCreated = new EventEnvelope(
                 UUID.randomUUID(),
-                "ThreadCreated",
                 tenantId,
-                threadId,
+                "ThreadCreated",
                 now,
                 objectMapper.valueToTree(threadPayload));
 
@@ -99,10 +99,9 @@ class DataLakeIntegrationTest {
 
         EventEnvelope postCreated = new EventEnvelope(
                 UUID.randomUUID(),
-                "PostCreated",
                 tenantId,
-                authorId,
-                now.plusMinutes(5),
+                "PostCreated",
+                now.plus(5, ChronoUnit.MINUTES),
                 objectMapper.valueToTree(postPayload));
 
         kafkaTemplate.send("forum-events-v1", objectMapper.writeValueAsString(postCreated));
@@ -118,7 +117,7 @@ class DataLakeIntegrationTest {
     @Test
     void testShouldRejectDuplicateEventId() {
         UUID eventId = UUID.randomUUID();
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         FactActivity fact1 = new FactActivity();
         fact1.setId(new FactActivity.FactActivityId(UUID.randomUUID(), now));

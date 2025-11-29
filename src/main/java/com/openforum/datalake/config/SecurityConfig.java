@@ -10,21 +10,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @org.springframework.beans.factory.annotation.Value("classpath:public-key.pem")
-    private java.security.interfaces.RSAPublicKey key;
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.decoder(jwtDecoder())));
+        http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));
         return http.build();
-    }
-
-    @Bean
-    public org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder() {
-        return org.springframework.security.oauth2.jwt.NimbusJwtDecoder.withPublicKey(this.key).build();
     }
 }
