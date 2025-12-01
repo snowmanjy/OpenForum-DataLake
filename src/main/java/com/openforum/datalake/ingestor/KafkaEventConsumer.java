@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 @Component
@@ -33,12 +34,27 @@ public class KafkaEventConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "forum-events-v1", groupId = "datalake-consumer-group")
+    @KafkaListener(topics = "forum-events-v1", groupId = "datalake-consumer-group-v4")
     @Transactional
     public void consume(String message) {
         System.out.println("Received message: " + message);
         try {
-            EventEnvelope event = objectMapper.readValue(message, EventEnvelope.class);
+            JsonNode rootNode = objectMapper.readTree(message);
+            EventEnvelope event;
+
+            if (rootNode.has("eventType")) {
+                event = objectMapper.treeToValue(rootNode, EventEnvelope.class);
+            } else {
+                // Fallback for raw events
+                log.warn("Received raw event without envelope. Attempting to infer type.");
+                event = inferEvent(rootNode);
+            }
+
+            if (event == null) {
+                log.error("Could not infer event type for message: {}", message);
+                return;
+            }
+
             log.info("Received event: {} type: {}", event.eventId(), event.eventType());
 
             if (factActivityRepository.existsByEventId(event.eventId())) {
@@ -54,6 +70,17 @@ public class KafkaEventConsumer {
             e.printStackTrace();
             log.error("Error processing event", e);
         }
+    }
+
+    private EventEnvelope inferEvent(JsonNode node) {
+        if (node.has("threadId") && node.has("title")) {
+            // Assume ThreadCreated
+            UUID eventId = UUID.randomUUID();
+            String tenantId = node.has("tenantId") ? node.get("tenantId").asText() : "unknown";
+            Instant occurredAt = node.has("createdAt") ? Instant.parse(node.get("createdAt").asText()) : Instant.now();
+            return new EventEnvelope(eventId, tenantId, "ThreadCreated", occurredAt, node);
+        }
+        return null;
     }
 
     private void processEvent(EventEnvelope event) {

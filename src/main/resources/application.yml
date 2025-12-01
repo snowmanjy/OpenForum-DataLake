@@ -6,7 +6,7 @@ spring:
     name: datalake-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/datalake_db
+    url: jdbc:postgresql://localhost:5434/datalake_db
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
@@ -23,9 +23,9 @@ spring:
     baseline-on-migrate: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: 127.0.0.1:9094
     consumer:
-      group-id: datalake-consumer-group
+      group-id: datalake-consumer-group-v4
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
